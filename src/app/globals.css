@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-plum text-white antialiased;
+  overflow: hidden;
+}
+
+::selection {
+  background: rgba(0, 229, 196, 0.35);
+  color: #ffffff;
+}
+
+/* Thin gold scrollbar for the customizer sidebar. */
+.custom-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 162, 74, 0.5) transparent;
+}
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(200, 162, 74, 0.4);
+  border-radius: 9999px;
+}
+
+/* Respect the operating system's reduced-motion preference for all UI motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
