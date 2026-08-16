@@ -110,7 +110,7 @@ export default function Home() {
       <header className="pointer-events-none absolute left-0 top-0 z-10 p-5 sm:p-8 md:left-8 md:top-6">
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-teal shadow-[0_0_12px_#00E5C4]" />
-          <span className="text-[11px] font-medium uppercase tracking-[0.35em] text-gold">
+          <span className="text-xs font-medium uppercase tracking-[0.35em] text-gold">
             Virtual Atelier
           </span>
         </div>

@@ -112,11 +112,32 @@ The complete primary flow was verified with an automated headless-Chrome CDP scr
 | Best Practices |    100 |    100 |     0 |
 | SEO            |    100 |    100 |     0 |
 
-The "After" run is the last completed verification. The final round of optimizations
-(mobile auto-rotate default off, env/shadow resolution, instant first paint) was
-applied after this run; a final confirmation re-run is still pending, and the −2
-performance delta is within run-to-run variance (LCP 2.2 s → 2.4 s, FCP 1.4 s → 1.6 s
-with no code change between those specific numbers beyond the mobile-rotate default).
+The "After" run is the last completed verification on the local build. The final round
+of optimizations (mobile auto-rotate default off, env/shadow resolution, instant first
+paint) was applied after this run, and the −2 performance delta is within run-to-run
+variance (LCP 2.2 s → 2.4 s, FCP 1.4 s → 1.6 s with no code change between those
+specific numbers beyond the mobile-rotate default).
+
+## Final Deployed Verification (16 Aug 2026)
+
+Lighthouse 12.8.2, Mobile form factor, against the production deployment
+`https://ai-fashion-studio-3d.vercel.app` — after the final round of optimizations
+and the mobile fixes (12 px minimum text, 44 px minimum tap targets):
+
+| Metric         | Local after | Deployed |
+| -------------- | ----------: | -------: |
+| Performance    |          60 |       67 |
+| Accessibility  |         100 |      100 |
+| Best Practices |         100 |      100 |
+| SEO            |         100 |      100 |
+| LCP            |    2.4 s |    1.9 s |
+| FCP            |    1.6 s |    1.2 s |
+| TBT            |    6.8 s |    2.9 s |
+| CLS            |    0.003 |    0    |
+
+Responsive re-verification on the deployment: no horizontal overflow, no console
+errors, no sub-12 px text, and no tap targets under 44 px at 320 / 390 / 412 / 768 /
+1280 px widths (automated headless-Chrome checks).
 
 ## Web Vitals
 

@@ -383,7 +383,7 @@ export default function ChatAssistant() {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center gap-3 rounded-xl border border-white/20 bg-white/[0.03] px-4 py-3 text-left transition-colors hover:border-teal/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal"
+        className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-white/20 bg-white/[0.03] px-4 py-3 text-left transition-colors hover:border-teal/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal"
       >
         <svg
           aria-hidden="true"

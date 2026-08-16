@@ -150,7 +150,7 @@ function CustomizerPanel({
         <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/85">
           Customize
         </h2>
-        <span className="text-[10px] uppercase tracking-[0.2em] text-white/55 md:hidden">
+        <span className="text-xs uppercase tracking-[0.2em] text-white/60 md:hidden">
           Drag bag to rotate
         </span>
       </div>
@@ -226,7 +226,7 @@ function CustomizerPanel({
                 aria-checked={selected}
                 tabIndex={selected ? 0 : -1}
                 onClick={() => onMaterialChange(option.id)}
-                className={`rounded-xl border px-2 py-3 text-xs font-medium uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
+                className={`min-h-11 rounded-xl border px-2 py-3 text-xs font-medium uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
                   selected
                     ? "border-teal bg-teal/10 text-teal"
                     : "border-white/35 text-white/75 hover:border-white/60 hover:text-white/95"
