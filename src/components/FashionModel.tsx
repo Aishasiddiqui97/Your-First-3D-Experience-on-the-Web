@@ -70,11 +70,15 @@ function FashionModel({ color, material, wireframe }: FashionModelProps) {
   }, [scene]);
 
   const colorHex = useMemo(() => new THREE.Color(color.hex), [color.hex]);
+  const appliedOnceRef = useRef(false);
 
   // Store the new desired look. Reduced-motion users snap instantly instead
-  // of animating, so nothing lingers mid-transition.
+  // of animating, so nothing lingers mid-transition. The very first apply
+  // (initial mount) also snaps: the product appears immediately in its chosen
+  // finish instead of fading in, keeping the first frame cheap.
   const applyTargets = useCallback(() => {
     const preset = MATERIAL_BY_ID[material.id];
+    const snap = reducedMotion || !appliedOnceRef.current;
     for (const state of materialsRef.current) {
       state.targetColor.copy(colorHex);
       state.targetRoughness = preset.roughness;
@@ -83,7 +87,7 @@ function FashionModel({ color, material, wireframe }: FashionModelProps) {
       state.targetClearcoatRoughness = preset.clearcoatRoughness;
       state.targetSheen = preset.sheen;
 
-      if (reducedMotion) {
+      if (snap) {
         state.material.color.copy(state.targetColor);
         state.material.roughness = state.targetRoughness;
         state.material.metalness = state.targetMetalness;
@@ -92,6 +96,7 @@ function FashionModel({ color, material, wireframe }: FashionModelProps) {
         state.material.sheen = state.targetSheen;
       }
     }
+    appliedOnceRef.current = true;
   }, [colorHex, material.id, reducedMotion]);
 
   useEffect(() => {
@@ -109,38 +114,57 @@ function FashionModel({ color, material, wireframe }: FashionModelProps) {
    * Smooth material transition: each frame we lerp every physical property
    * towards its target. `useFrame` runs inside the render loop and mutates
    * the materials in place, which avoids any React re-render cost.
+   *
+   * When the canvas is in demand mode (reduced motion or auto-rotate off) the
+   * transition must keep asking for frames, so we call `state.invalidate()`
+   * while any property is still moving and stop as soon as it settles — this
+   * lets the GPU/main thread idle once the scene is static.
    */
-  useFrame(() => {
+  useFrame((state) => {
     if (reducedMotion) return;
     const t = 0.09;
-    for (const state of materialsRef.current) {
-      state.material.color.lerp(state.targetColor, t);
-      state.material.roughness = THREE.MathUtils.lerp(
-        state.material.roughness,
-        state.targetRoughness,
+    let animating = false;
+    for (const s of materialsRef.current) {
+      s.material.color.lerp(s.targetColor, t);
+      s.material.roughness = THREE.MathUtils.lerp(
+        s.material.roughness,
+        s.targetRoughness,
         t,
       );
-      state.material.metalness = THREE.MathUtils.lerp(
-        state.material.metalness,
-        state.targetMetalness,
+      s.material.metalness = THREE.MathUtils.lerp(
+        s.material.metalness,
+        s.targetMetalness,
         t,
       );
-      state.material.clearcoat = THREE.MathUtils.lerp(
-        state.material.clearcoat,
-        state.targetClearcoat,
+      s.material.clearcoat = THREE.MathUtils.lerp(
+        s.material.clearcoat,
+        s.targetClearcoat,
         t,
       );
-      state.material.clearcoatRoughness = THREE.MathUtils.lerp(
-        state.material.clearcoatRoughness,
-        state.targetClearcoatRoughness,
+      s.material.clearcoatRoughness = THREE.MathUtils.lerp(
+        s.material.clearcoatRoughness,
+        s.targetClearcoatRoughness,
         t,
       );
-      state.material.sheen = THREE.MathUtils.lerp(
-        state.material.sheen,
-        state.targetSheen,
+      s.material.sheen = THREE.MathUtils.lerp(
+        s.material.sheen,
+        s.targetSheen,
         t,
       );
+
+      const moving =
+        Math.abs(s.material.color.r - s.targetColor.r) > 0.002 ||
+        Math.abs(s.material.color.g - s.targetColor.g) > 0.002 ||
+        Math.abs(s.material.color.b - s.targetColor.b) > 0.002 ||
+        Math.abs(s.material.roughness - s.targetRoughness) > 0.001 ||
+        Math.abs(s.material.metalness - s.targetMetalness) > 0.001 ||
+        Math.abs(s.material.clearcoat - s.targetClearcoat) > 0.001 ||
+        Math.abs(s.material.clearcoatRoughness - s.targetClearcoatRoughness) >
+          0.001 ||
+        Math.abs(s.material.sheen - s.targetSheen) > 0.001;
+      if (moving) animating = true;
     }
+    if (animating) state.invalidate();
   });
 
   // Center/scale bookkeeping: lift the model so its base rests on y = 0 and
@@ -165,7 +189,7 @@ function FashionModel({ color, material, wireframe }: FashionModelProps) {
         blur={2.6}
         scale={placement.shadowScale}
         far={4}
-        resolution={256}
+        resolution={128}
         frames={1}
       />
     </group>

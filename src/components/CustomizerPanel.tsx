@@ -1,6 +1,7 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect, useRef } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import { COLOR_OPTIONS, MATERIAL_OPTIONS } from "@/lib/customization";
 import type {
   ColorOptionId,
@@ -16,6 +17,59 @@ interface CustomizerPanelProps {
   onMaterialChange: (id: MaterialOptionId) => void;
   onWireframeChange: (value: boolean) => void;
   onAutoRotateChange: (value: boolean) => void;
+  /** Optional content rendered above the panel footer (e.g. the chat launcher). */
+  footer?: ReactNode;
+}
+
+/**
+ * ARIA APG "radio group" keyboard interaction: exactly one radio is in the tab
+ * order (the checked one) and Arrow/Home/End keys move focus while selecting.
+ */
+function useRadioRoving(
+  count: number,
+  selectedIndex: number,
+  onSelect: (index: number) => void,
+) {
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const focusIndexRef = useRef(selectedIndex);
+
+  useEffect(() => {
+    focusIndexRef.current = selectedIndex;
+  }, [selectedIndex]);
+
+  const moveTo = (index: number) => {
+    const next = (index + count) % count;
+    focusIndexRef.current = next;
+    onSelect(next);
+    itemRefs.current[next]?.focus();
+  };
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    switch (event.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        event.preventDefault();
+        moveTo(focusIndexRef.current + 1);
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        event.preventDefault();
+        moveTo(focusIndexRef.current - 1);
+        break;
+      case "Home":
+        event.preventDefault();
+        moveTo(0);
+        break;
+      case "End":
+        event.preventDefault();
+        moveTo(count - 1);
+        break;
+      default:
+        break;
+    }
+  };
+
+  return { itemRefs, handleKeyDown };
 }
 
 interface ToggleProps {
@@ -40,7 +94,7 @@ function Toggle({ label, active, onChange }: ToggleProps) {
       <span
         aria-hidden
         className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-          active ? "bg-teal" : "bg-white/15"
+          active ? "bg-teal" : "bg-white/40"
         }`}
       >
         <span
@@ -67,7 +121,26 @@ function CustomizerPanel({
   onMaterialChange,
   onWireframeChange,
   onAutoRotateChange,
+  footer,
 }: CustomizerPanelProps) {
+  const selectedColorIndex = COLOR_OPTIONS.findIndex(
+    (option) => option.id === colorId,
+  );
+  const colorRoving = useRadioRoving(
+    COLOR_OPTIONS.length,
+    selectedColorIndex,
+    (index) => onColorChange(COLOR_OPTIONS[index].id),
+  );
+
+  const selectedMaterialIndex = MATERIAL_OPTIONS.findIndex(
+    (option) => option.id === materialId,
+  );
+  const materialRoving = useRadioRoving(
+    MATERIAL_OPTIONS.length,
+    selectedMaterialIndex,
+    (index) => onMaterialChange(MATERIAL_OPTIONS[index].id),
+  );
+
   return (
     <aside
       aria-label="Product customizer"
@@ -77,7 +150,7 @@ function CustomizerPanel({
         <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/85">
           Customize
         </h2>
-        <span className="text-[10px] uppercase tracking-[0.2em] text-white/35 md:hidden">
+        <span className="text-[10px] uppercase tracking-[0.2em] text-white/55 md:hidden">
           Drag bag to rotate
         </span>
       </div>
@@ -90,23 +163,28 @@ function CustomizerPanel({
         <div
           role="radiogroup"
           aria-label="Choose product color"
+          onKeyDown={colorRoving.handleKeyDown}
           className="flex flex-wrap gap-3"
         >
-          {COLOR_OPTIONS.map((option) => {
+          {COLOR_OPTIONS.map((option, index) => {
             const selected = option.id === colorId;
             return (
               <button
                 key={option.id}
+                ref={(el) => {
+                  colorRoving.itemRefs.current[index] = el;
+                }}
                 type="button"
                 role="radio"
                 aria-checked={selected}
                 aria-label={`${option.label} color`}
+                tabIndex={selected ? 0 : -1}
                 title={option.label}
                 onClick={() => onColorChange(option.id)}
                 className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 focus-visible:ring-offset-plum ${
                   selected
                     ? "scale-105 border-teal"
-                    : "border-white/20 hover:scale-105 hover:border-white/50"
+                    : "border-white/45 hover:scale-105 hover:border-white/70"
                 }`}
                 style={{ backgroundColor: option.hex }}
               >
@@ -132,21 +210,26 @@ function CustomizerPanel({
         <div
           role="radiogroup"
           aria-label="Choose material finish"
+          onKeyDown={materialRoving.handleKeyDown}
           className="grid grid-cols-3 gap-2"
         >
-          {MATERIAL_OPTIONS.map((option) => {
+          {MATERIAL_OPTIONS.map((option, index) => {
             const selected = option.id === materialId;
             return (
               <button
                 key={option.id}
+                ref={(el) => {
+                  materialRoving.itemRefs.current[index] = el;
+                }}
                 type="button"
                 role="radio"
                 aria-checked={selected}
+                tabIndex={selected ? 0 : -1}
                 onClick={() => onMaterialChange(option.id)}
                 className={`rounded-xl border px-2 py-3 text-xs font-medium uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
                   selected
                     ? "border-teal bg-teal/10 text-teal"
-                    : "border-white/15 text-white/60 hover:border-white/40 hover:text-white/85"
+                    : "border-white/35 text-white/75 hover:border-white/60 hover:text-white/95"
                 }`}
               >
                 {option.label}
@@ -170,7 +253,9 @@ function CustomizerPanel({
         />
       </section>
 
-      <div className="mt-auto border-t border-white/10 pt-4 text-[10px] uppercase tracking-[0.2em] text-white/30">
+      {footer}
+
+      <div className="mt-auto border-t border-white/10 pt-4 text-[10px] uppercase tracking-[0.2em] text-white/50">
         Powered by React Three Fiber
       </div>
     </aside>

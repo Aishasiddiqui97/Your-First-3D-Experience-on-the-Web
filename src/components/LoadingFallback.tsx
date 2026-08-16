@@ -9,11 +9,9 @@ export default function LoadingFallback() {
   return (
     <div
       role="status"
-      aria-live="polite"
-      aria-label="Loading the 3D experience"
       className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-5 bg-plum/80 backdrop-blur-sm"
     >
-      <div className="relative h-14 w-14">
+      <div aria-hidden="true" className="relative h-14 w-14">
         <div className="absolute inset-0 animate-spin rounded-full border-2 border-teal/20 border-t-teal" />
         <div className="absolute inset-3 rounded-full bg-gold/20" />
       </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import ChatAssistant from "@/components/ChatAssistant";
 import CustomizerPanel from "@/components/CustomizerPanel";
 import LoadingFallback from "@/components/LoadingFallback";
 import {
@@ -28,11 +29,46 @@ export default function Home() {
   const [materialId, setMaterialId] = useState<MaterialOptionId>("fabric");
   const [wireframe, setWireframe] = useState(false);
   const [autoRotate, setAutoRotate] = useState(true);
+  const [sceneReady, setSceneReady] = useState(false);
 
-  // If the user prefers reduced motion, never auto-rotate the scene.
+  // Auto-rotation is an opt-in showcase: it defaults ON for pointer devices
+  // (desktop) but OFF for coarse-pointer / small mobile viewports where a
+  // continuous 60 fps WebGL render loop would burn main thread and battery.
+  // The "Auto rotate" switch in the customizer re-enables it anywhere.
   useEffect(() => {
-    if (reducedMotion) setAutoRotate(false);
+    if (reducedMotion) {
+      setAutoRotate(false);
+      return;
+    }
+    const coarse = window.matchMedia("(pointer: coarse)");
+    if (coarse.matches || window.innerWidth <= 768) {
+      setAutoRotate(false);
+    }
   }, [reducedMotion]);
+
+  // Delay mounting the WebGL scene (and thus downloading the ~1 MB three.js
+  // runtime) until after first paint and the main thread goes idle. The hero
+  // text, fonts and customizer shell paint first, so the large JS chunk never
+  // blocks the LCP; the loader fills the gap while the scene warms up.
+  useEffect(() => {
+    const w = window as Window &
+      typeof globalThis & {
+        requestIdleCallback: (
+          cb: IdleRequestCallback,
+          options?: IdleRequestOptions,
+        ) => number;
+        cancelIdleCallback: (handle: number) => void;
+      };
+    if (typeof w.requestIdleCallback === "function") {
+      const handle = w.requestIdleCallback(
+        () => setSceneReady(true),
+        { timeout: 2500 },
+      );
+      return () => w.cancelIdleCallback(handle);
+    }
+    const handle = window.setTimeout(() => setSceneReady(true), 1000);
+    return () => window.clearTimeout(handle);
+  }, []);
 
   const color = COLOR_BY_ID[colorId];
   const material = MATERIAL_BY_ID[materialId];
@@ -45,19 +81,29 @@ export default function Home() {
     setAutoRotate(value);
   }, []);
 
+  // Stable element so the memoized CustomizerPanel keeps skipping re-renders.
+  const chatAssistant = useMemo(() => <ChatAssistant />, []);
+
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-plum text-white">
       {/* Subtle teal glow behind the product. */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,229,196,0.08),transparent_60%)]" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,229,196,0.08),transparent_60%)]"
+      />
 
       {/* 3D scene fills the whole viewport. */}
       <div className="absolute inset-0">
-        <ThreeScene
-          color={color}
-          material={material}
-          wireframe={wireframe}
-          autoRotate={autoRotate && !reducedMotion}
-        />
+        {sceneReady ? (
+          <ThreeScene
+            color={color}
+            material={material}
+            wireframe={wireframe}
+            autoRotate={autoRotate && !reducedMotion}
+          />
+        ) : (
+          <LoadingFallback />
+        )}
       </div>
 
       {/* Hero heading (pointer-events-none so it never blocks orbit controls). */}
@@ -81,7 +127,7 @@ export default function Home() {
       </header>
 
       {/* Interaction hint (desktop only). */}
-      <div className="pointer-events-none absolute bottom-4 left-5 z-10 hidden text-xs uppercase tracking-[0.25em] text-white/35 sm:block">
+      <div className="pointer-events-none absolute bottom-4 left-5 z-10 hidden text-xs uppercase tracking-[0.25em] text-white/55 sm:block">
         Drag to orbit · Scroll to zoom
       </div>
 
@@ -94,6 +140,7 @@ export default function Home() {
         onMaterialChange={setMaterialId}
         onWireframeChange={handleWireframeChange}
         onAutoRotateChange={handleAutoRotateChange}
+        footer={chatAssistant}
       />
     </main>
   );
