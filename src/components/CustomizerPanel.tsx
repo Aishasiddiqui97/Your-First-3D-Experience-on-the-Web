@@ -255,8 +255,8 @@ function CustomizerPanel({
 
       {footer}
 
-      <div className="mt-auto border-t border-white/10 pt-4 text-[10px] uppercase tracking-[0.2em] text-white/50">
-        Powered by React Three Fiber
+      <div className="mt-auto border-t border-white/10 pt-4 text-[12px] uppercase tracking-[0.2em] text-white/50">
+        Built by Aisha.A.Siddiqui · Powered by React Three Fiber
       </div>
     </aside>
   );

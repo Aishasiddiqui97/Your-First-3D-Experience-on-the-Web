@@ -329,6 +329,7 @@ export default function ChatAssistant() {
             }}
             enterKeyHint="send"
             placeholder="Ask about finishes, materials, colours…"
+            maxLength={2000}
             className="max-h-28 min-h-[42px] w-full flex-1 resize-y rounded-xl border border-white/20 bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder-white/50 focus:border-teal focus:outline-none focus-visible:ring-2 focus-visible:ring-teal"
           />
           {streaming ? (
