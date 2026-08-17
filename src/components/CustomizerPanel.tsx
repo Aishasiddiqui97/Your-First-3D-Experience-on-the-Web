@@ -256,7 +256,18 @@ function CustomizerPanel({
       {footer}
 
       <div className="mt-auto border-t border-white/10 pt-4 text-[12px] uppercase tracking-[0.2em] text-white/50">
-        Built by Aisha.A.Siddiqui · Powered by React Three Fiber
+        <p>Built by Aisha.A.Siddiqui · Powered by React Three Fiber</p>
+        <a
+          href="https://internship.flyrank.ai/verify"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#53E399]/30 bg-[#53E399]/10 px-3 py-1.5 text-[11px] font-medium normal-case tracking-normal text-[#53E399] transition-colors hover:border-[#53E399]/50 hover:bg-[#53E399]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#53E399]"
+        >
+          <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
+            <path d="M8 1l2.09 4.24L15 5.94l-3.5 3.41.83 4.81L8 12.18l-4.33 1.98.83-4.81L1 5.94l4.91-.7L8 1z" fill="#53E399"/>
+          </svg>
+          FlyRank Verified Graduate
+        </a>
       </div>
     </aside>
   );
